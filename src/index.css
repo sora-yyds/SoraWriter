@@ -1,7 +1,986 @@
+/* 启动画面样式 */
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.splash-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  animation: pulse 2s infinite;
+}
+
+.splash-title {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  letter-spacing: 1px;
+}
+
+.splash-subtitle {
+  font-size: 16px;
+  opacity: 0.9;
+  margin-bottom: 30px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.splash-loader {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 应用主体在加载时隐藏 */
+body.loading .app-content {
+  opacity: 0;
+}
+
+body.loaded .app-content {
+  opacity: 1;
+  transition: opacity 0.3s ease-in;
+}
+
+/* 自定义标题栏样式 */
+.custom-titlebar {
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  -webkit-app-region: drag;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.titlebar-drag-region {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.app-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+.app-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  letter-spacing: 0.3px;
+}
+
+.titlebar-center {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0 20px;
+  font-weight: 500;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+.titlebar-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-btn {
+  width: 46px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  position: relative;
+}
+
+.titlebar-btn:hover {
+  background-color: rgba(255,255,255,0.15);
+}
+
+.titlebar-btn:active {
+  background-color: rgba(255,255,255,0.25);
+  transform: scale(0.95);
+}
+
+.close-btn:hover {
+  background-color: #e74c3c !important;
+}
+
+.close-btn:active {
+  background-color: #c0392b !important;
+}
+
+.titlebar-btn svg {
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+
+.titlebar-btn:active {
+  background-color: rgba(255,255,255,0.2);
+}
+
+.close-btn:hover {
+  background-color: #e74c3c !important;
+}
+
+.close-btn:active {
+  background-color: #c0392b !important;
+}
+
+.titlebar-btn svg {
+  flex-shrink: 0;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif;
-  margin: auto;
-  max-width: 38rem;
-  padding: 2rem;
+  margin: 0;
+  padding: 0;
+  padding-top: 32px; /* 为标题栏留出空间 */
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  height: calc(100vh - 32px); /* 减去标题栏高度 */
+  overflow: hidden;
+}
+
+.container.resizing {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: col-resize;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #f5f5f5;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  max-width: 500px;
+}
+
+.sidebar-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-panel:first-child {
+  border-bottom: 1px solid #ddd;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  margin: 0;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.new-file-btn {
+  background-color: #0078d7;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.new-file-btn:hover {
+  background-color: #005a9e;
+}
+
+.file-list,
+.outline-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.file-item,
+.outline-item {
+  padding: 8px 15px 8px 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 2px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.file-item .file-info {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.file-item .file-name {
+  font-weight: 500;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 2px;
+}
+
+.file-item .file-details {
+  font-size: 11px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-item.active .file-details {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.file-buttons {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.file-item:hover .file-buttons {
+  opacity: 1;
+}
+
+.rename-file-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.rename-file-btn:hover {
+  background-color: #007acc;
+  color: white;
+}
+
+.delete-file-btn {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.file-item:hover .delete-file-btn {
+  opacity: 1;
+}
+
+.delete-file-btn:hover {
+  background-color: #ff4444;
+  color: white;
+}
+
+.file-item:hover,
+.outline-item:hover {
+  background-color: #e0e0e0;
+}
+
+.file-item.active {
+  background-color: #0078d7;
+  color: white;
+}
+
+.outline-item {
+  padding-left: calc(20px + var(--level) * 15px);
+  font-size: 14px;
+}
+
+.outline-h1 {
+  font-weight: 600;
+  padding-left: 20px;
+  font-size: 14px;
+}
+
+.outline-h2 {
+  font-weight: 500;
+  padding-left: 35px;
+  font-size: 13px;
+}
+
+.outline-h3 {
+  font-weight: 400;
+  padding-left: 50px;
+  font-size: 13px;
+}
+
+.outline-h4 {
+  font-weight: 400;
+  padding-left: 65px;
+  font-size: 12px;
+}
+
+.outline-h5 {
+  font-weight: 400;
+  padding-left: 80px;
+  font-size: 12px;
+}
+
+.outline-h6 {
+  font-weight: 400;
+  padding-left: 95px;
+  font-size: 12px;
+}
+
+.outline-h1,
+.outline-h2,
+.outline-h3,
+.outline-h4,
+.outline-h5,
+.outline-h6 {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 1px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.2s;
+}
+
+.outline-h1:hover,
+.outline-h2:hover,
+.outline-h3:hover,
+.outline-h4:hover,
+.outline-h5:hover,
+.outline-h6:hover {
+  background-color: #e0e0e0;
+}
+
+/* 分隔条样式 - 使用默认鼠标样式以支持自定义Windows鼠标主题 */
+.resizer {
+  width: 5px;
+  background-color: #ddd;
+  cursor: default; /* 使用默认样式以应用自定义鼠标主题 */
+  transition: background-color 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+}
+
+/* 如果要使用自定义鼠标样式，可以取消注释下面的代码并提供鼠标图片文件 */
+/*
+.resizer {
+  cursor: url('path/to/your/col-resize-cursor.cur'), col-resize;
+}
+
+.editor-resizer {
+  cursor: url('path/to/your/col-resize-cursor.cur'), col-resize;
+}
+
+#panelResizer {
+  cursor: url('path/to/your/row-resize-cursor.cur'), row-resize;
+}
+
+.container.resizing {
+  cursor: url('path/to/your/col-resize-cursor.cur'), col-resize !important;
+}
+
+.container.resizing * {
+  cursor: url('path/to/your/col-resize-cursor.cur'), col-resize !important;
+}
+*/
+
+.resizer:hover {
+  background-color: #999;
+}
+
+.resizer.active {
+  background-color: #666;
+}
+
+.resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 9px;
+  height: 100%;
+  cursor: default; /* 使用默认样式以应用自定义鼠标主题 */
+  z-index: 10;
+}
+
+.main-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 300px;
+}
+
+.editor-header {
+  padding: 10px 20px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f9f9f9;
+}
+
+.editor-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.editor-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.preview-mode-buttons {
+  display: flex;
+  background-color: #e0e0e0;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.mode-btn {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  margin: 0 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  color: #666;
+}
+
+.mode-btn:hover {
+  background-color: #d0d0d0;
+}
+
+.mode-btn.active {
+  background-color: #0078d7;
+  color: white;
+}
+
+.editor-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative; /* 为分隔条提供定位上下文 */
+}
+
+.editor-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.editor-resizer {
+  width: 5px;
+  background-color: #ddd;
+  cursor: default; /* 使用默认样式以应用自定义鼠标主题 */
+  transition: background-color 0.2s;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+  flex-shrink: 0; /* 防止分隔条被压缩 */
+  z-index: 10; /* 确保分隔条在上层 */
+  min-width: 5px; /* 最小宽度 */
+  max-width: 5px; /* 最大宽度 */
+}
+
+.editor-resizer:hover {
+  background-color: #999;
+}
+
+.editor-resizer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 9px;
+  height: 100%;
+  cursor: default; /* 使用默认样式以应用自定义鼠标主题 */
+  z-index: 10;
+}
+
+.preview-panel {
+  flex: 1;
+  background-color: white;
+  overflow-y: auto;
+  min-width: 200px;
+}
+
+.markdown-preview {
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Markdown 预览样式 */
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+
+.markdown-preview h1 {
+  font-size: 2em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 8px;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 8px;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25em;
+}
+
+.markdown-preview h4 {
+  font-size: 1em;
+}
+
+.markdown-preview h5 {
+  font-size: 0.875em;
+}
+
+.markdown-preview h6 {
+  font-size: 0.85em;
+  color: #6a737d;
+}
+
+.markdown-preview p {
+  margin-bottom: 16px;
+}
+
+.markdown-preview ul,
+.markdown-preview ol {
+  padding-left: 24px;
+  margin-bottom: 16px;
+}
+
+.markdown-preview li {
+  margin-bottom: 4px;
+}
+
+.markdown-preview code {
+  background-color: rgba(27, 31, 35, 0.05);
+  border-radius: 3px;
+  font-size: 85%;
+  margin: 0;
+  padding: 0.2em 0.4em;
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.markdown-preview pre {
+  background-color: #f6f8fa;
+  border-radius: 6px;
+  font-size: 85%;
+  line-height: 1.45;
+  overflow: auto;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.markdown-preview pre code {
+  background-color: transparent;
+  border: 0;
+  display: inline;
+  line-height: inherit;
+  margin: 0;
+  max-width: auto;
+  overflow: visible;
+  padding: 0;
+  word-wrap: normal;
+}
+
+.markdown-preview blockquote {
+  border-left: 4px solid #dfe2e5;
+  color: #6a737d;
+  margin: 0 0 16px;
+  padding: 0 16px;
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.markdown-preview table th,
+.markdown-preview table td {
+  border: 1px solid #dfe2e5;
+  padding: 6px 13px;
+}
+
+.markdown-preview table th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-preview a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+/* 预览模式样式 */
+.main-editor.edit-mode .preview-panel,
+.main-editor.edit-mode .editor-resizer {
+  display: none;
+}
+
+.main-editor.edit-mode .editor-panel {
+  flex: 1;
+  width: 100%;
+  min-width: unset;
+}
+
+.main-editor.edit-mode .editor-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.main-editor.preview-mode .editor-panel,
+.main-editor.preview-mode .editor-resizer {
+  display: none;
+}
+
+.main-editor.preview-mode .preview-panel {
+  flex: 1;
+  width: 100%;
+  min-width: unset;
+}
+
+.main-editor.preview-mode .editor-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.main-editor.split-mode .editor-panel,
+.main-editor.split-mode .preview-panel {
+  display: flex;
+}
+
+.main-editor.split-mode .editor-resizer {
+  display: block;
+  flex-shrink: 0;
+}
+
+#editor {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* 确保在纯编辑模式下编辑器占满整个可用空间 */
+.main-editor.edit-mode #editor {
+  height: calc(100vh - 80px); /* 减去头部高度 */
+  max-height: none;
+}
+
+/* 确保在纯预览模式下预览区占满整个可用空间 */
+.main-editor.preview-mode .preview-panel {
+  height: calc(100vh - 80px); /* 减去头部高度 */
+  max-height: none;
+}
+
+#panelResizer {
+  width: 100%;
+  height: 5px;
+  cursor: default; /* 使用默认样式以应用自定义鼠标主题 */
+  background-color: #ddd;
+  transition: background-color 0.2s;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#panelResizer:hover {
+  background-color: #999;
+}
+
+#panelResizer::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 100%;
+  height: 9px;
+  cursor: default; /* 使用默认样式以应用自定义鼠标主题 */
+  z-index: 10;
+}
+
+#panelResizer.active {
+  background-color: #666;
+}
+
+/* 模态对话框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-content h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.modal-content input:focus {
+  outline: none;
+  border-color: #0078d7;
+  box-shadow: 0 0 0 2px rgba(0, 120, 215, 0.2);
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  min-width: 70px;
+  transition: background-color 0.2s;
+}
+
+#confirmBtn {
+  background-color: #0078d7;
+  color: white;
+}
+
+#confirmBtn:hover {
+  background-color: #005a9e;
+}
+
+#cancelBtn {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+#cancelBtn:hover {
+  background-color: #e0e0e0;
+}
+
+/* 文件操作按钮样式 */
+.file-buttons {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.file-item:hover .file-buttons {
+  opacity: 1;
+}
+
+.rename-file-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.rename-file-btn:hover {
+  background-color: #007acc;
+  color: white;
+}
+
+.delete-file-btn {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.delete-file-btn:hover {
+  background-color: #ff4444;
+  color: white;
+}
+
+/* 弹窗消息样式 */
+.modal-message {
+  margin: 16px 0;
+  line-height: 1.5;
+  color: #555;
+  white-space: pre-line; /* 支持换行符 */
 }

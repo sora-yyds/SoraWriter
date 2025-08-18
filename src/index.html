@@ -2,11 +2,108 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoraWriter Markdown Editor</title>
+    <link rel="stylesheet" href="index.css">
   </head>
-  <body>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
+  <body class="loading">
+    <!-- 启动画面 -->
+    <div id="splashScreen" class="splash-screen">
+      <svg class="splash-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="20" fill="white" fill-opacity="0.1"/>
+        <path d="M25 35h50v8H25zM25 50h35v8H25zM25 65h45v8H25z" fill="white"/>
+        <circle cx="75" cy="25" r="8" fill="white" fill-opacity="0.8"/>
+      </svg>
+      <h1 class="splash-title">SoraWriter</h1>
+      <p class="splash-subtitle">Markdown Editor</p>
+      <div class="splash-loader"></div>
+    </div>
+
+    <!-- 应用主体内容 -->
+    <div class="app-content">
+    <!-- 自定义标题栏 -->
+    <div class="custom-titlebar">
+      <div class="titlebar-drag-region">
+        <div class="titlebar-left">
+          <img class="app-icon" alt="SoraWriter" width="16" height="16">
+          <span class="app-title">SoraWriter</span>
+        </div>
+        <div class="titlebar-center">
+          <span id="titlebarFileName"></span>
+        </div>
+        <div class="titlebar-right">
+          <button id="minimizeBtn" class="titlebar-btn minimize-btn" title="最小化">
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect x="2" y="5" width="8" height="2"/>
+            </svg>
+          </button>
+          <button id="maximizeBtn" class="titlebar-btn maximize-btn" title="最大化">
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <rect x="2" y="2" width="8" height="8" stroke="currentColor" stroke-width="1" fill="none"/>
+            </svg>
+          </button>
+          <button id="closeBtn" class="titlebar-btn close-btn" title="关闭">
+            <svg width="12" height="12" viewBox="0 0 12 12">
+              <path d="M2 2 L10 10 M10 2 L2 10" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container">
+      <div class="sidebar">
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <h2 id="filesTitle">Files</h2>
+            <button id="newFileBtn" class="new-file-btn">+</button>
+          </div>
+          <ul id="fileList" class="file-list">
+            <li class="file-item" data-file="welcome.md">welcome.md</li>
+          </ul>
+        </div>
+        
+        <div class="resizer" id="panelResizer"></div>
+        
+        <div class="sidebar-panel">
+          <div class="sidebar-header">
+            <h2 id="outlineTitle">Outline</h2>
+          </div>
+          <ul id="outlineList" class="outline-list">
+            <!-- 大纲内容将通过JavaScript动态生成 -->
+          </ul>
+        </div>
+      </div>
+      
+      <!-- 左侧拖拽分隔条 -->
+      <div class="resizer" id="leftResizer"></div>
+      
+      <div class="main-editor">
+        <div class="editor-header">
+          <div class="editor-header-left">
+            <span id="currentFileName">welcome.md</span>
+            <span id="unsavedIndicator" class="unsaved hidden">*</span>
+          </div>
+          <div class="editor-header-right">
+            <div class="preview-mode-buttons">
+              <button id="splitViewBtn" class="mode-btn active" title="分屏模式">⚏</button>
+              <button id="editViewBtn" class="mode-btn" title="编辑模式">📝</button>
+              <button id="previewViewBtn" class="mode-btn" title="预览模式">👁</button>
+            </div>
+          </div>
+        </div>
+        <div class="editor-content">
+          <div class="editor-panel">
+            <textarea id="editor" placeholder="Start writing your markdown here..."></textarea>
+          </div>
+          <div class="editor-resizer" id="editorResizer"></div>
+          <div class="preview-panel" id="previewPanel">
+            <div id="preview" class="markdown-preview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div> <!-- 结束 app-content -->
+    <script src="renderer.js"></script>
   </body>
 </html>

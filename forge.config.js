@@ -1,15 +1,25 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+const path = require('path');
 
 module.exports = {
   packagerConfig: {
     asar: true,
+    name: 'SoraWriter',
+    executableName: 'SoraWriter',
+    // 包含 assets 目录作为额外资源
+    extraResource: [
+      './assets'
+    ],
+    // 应用图标配置 - Windows 使用 .ico 文件以确保 exe 文件有图标
+    icon: './assets/favicon.ico'
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+      },
     },
     {
       name: '@electron-forge/maker-zip',
