@@ -1,7 +1,7 @@
 # SoraWriter
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-GPL-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20(tested)%20%7C%20macOS%20(theoretical)%20%7C%20Linux%20(theoretical)-lightgrey.svg)
 ![Electron](https://img.shields.io/badge/Electron-37.3.0-blue.svg)
 
