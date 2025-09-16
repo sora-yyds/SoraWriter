@@ -96,4 +96,14 @@ export default {
   settings_save_failed: '保存设置失败',
   // 菜单项
   menu_settings: '设置'
+  ,
+  // 背景设置
+  background: '背景',
+  bg_default: '默认',
+  bg_color: '纯色',
+  bg_image: '图片',
+  choose_image: '选择图片',
+  translucent_panels: '半透明面板'
+  ,
+  background_blur: '背景模糊'
 };

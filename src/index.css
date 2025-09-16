@@ -73,10 +73,34 @@ body.loaded .app-content {
   transition: opacity 0.3s ease-in;
 }
 
+/* 自定义背景支持 */
+body[data-bg-type="color"] { background: var(--app-custom-bg, #ffffff); }
+body[data-bg-type="image"] {
+  background-color: transparent;
+  /* 背景图由 inline style 设置，以确保路径生效 */
+}
+
+/* 半透明面板（在有图片或自定义背景时更协调） */
+body.translucent-panels .sidebar { background-color: rgba(20,20,20,0.58); border-right-color: rgba(255,255,255,0.08); -webkit-backdrop-filter: blur(var(--panel-blur, 8px)); backdrop-filter: blur(var(--panel-blur, 8px)); }
+body.translucent-panels .editor-header { background-color: rgba(0,0,0,0.5); border-bottom-color: rgba(255,255,255,0.08); }
+body.translucent-panels .preview-mode-buttons { background-color: rgba(0,0,0,0.35); }
+body.translucent-panels .file-item:hover,
+body.translucent-panels .outline-item:hover { background-color: rgba(255,255,255,0.08); }
+body.translucent-panels .preview-panel { background-color: rgba(18,18,18,0.6); }
+
+/* 浅色主题下的半透明微调 */
+body[data-theme="light"].translucent-panels .sidebar { background-color: rgba(255,255,255,0.72); border-right-color: rgba(0,0,0,0.06); -webkit-backdrop-filter: blur(var(--panel-blur, 8px)); backdrop-filter: blur(var(--panel-blur, 8px)); }
+body[data-theme="light"].translucent-panels .editor-header {
+  background-color: rgba(255,255,255,0.65);
+  border-bottom-color: rgba(0,0,0,0.06);
+}
+body[data-theme="light"].translucent-panels .preview-mode-buttons { background-color: rgba(255,255,255,0.6); }
+body[data-theme="light"].translucent-panels .preview-panel { background-color: rgba(255,255,255,0.7); }
+
 /* 自定义标题栏样式 */
 .custom-titlebar {
   height: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(102,126,234,0.85) 0%, rgba(118,75,162,0.85) 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -86,8 +110,10 @@ body.loaded .app-content {
   right: 0;
   z-index: 1000;
   -webkit-app-region: drag;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .titlebar-drag-region {
@@ -855,13 +881,15 @@ body {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: rgba(255,255,255,0.85);
   border-radius: 8px;
   padding: 24px;
   min-width: 320px;
   max-width: 500px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: modalFadeIn 0.2s ease-out;
+  -webkit-backdrop-filter: blur(var(--panel-blur, 8px));
+  backdrop-filter: blur(var(--panel-blur, 8px));
 }
 
 @keyframes modalFadeIn {
@@ -1010,13 +1038,15 @@ body {
   position: absolute;
   top: 0; right: 0; bottom: 0;
   width: min(420px, 92vw);
-  background: var(--panel-bg, #1e1e1e);
+  background: color-mix(in srgb, var(--panel-bg, #1e1e1e) 82%, transparent);
   color: var(--fg, #ddd);
   box-shadow: -8px 0 24px rgba(0,0,0,0.3);
   transform: translateX(100%);
   transition: transform .2s ease;
   display: flex;
   flex-direction: column;
+  -webkit-backdrop-filter: blur(var(--panel-blur, 8px));
+  backdrop-filter: blur(var(--panel-blur, 8px));
 }
 .settings-overlay.open .settings-drawer { transform: translateX(0); }
 
@@ -1066,6 +1096,20 @@ body {
 .btn-primary { background: #3b82f6; color: #fff; border-color: #2563eb; }
 .btn-secondary { background: transparent; color: inherit; border-color: rgba(255,255,255,0.18); }
 
+/* 背景设置分行布局 */
+.setting-bg { flex-direction: column; align-items: stretch; gap: 6px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.setting-row .setting-label { font-weight: 500; }
+.setting-row .setting-sub { font-size: 12px; opacity: .8; }
+.setting-filepick { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.file-name-hint { opacity: .7; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 亮色主题下的边框/背景适配 */
+body[data-theme="light"] .settings-tab.active { background: rgba(0,0,0,0.06); }
+body[data-theme="light"] .settings-header { border-bottom-color: rgba(0,0,0,0.08); }
+body[data-theme="light"] .settings-footer { border-top-color: rgba(0,0,0,0.08); }
+body[data-theme="light"] .setting-item { border-bottom-color: rgba(0,0,0,0.06); }
+
 /* 主题占位（可与现有主题变量整合） */
 body[data-theme="light"] .settings-drawer { background: #fff; color: #222; }
 body[data-theme="light"] .setting-item input,
@@ -1083,7 +1127,7 @@ body[data-theme="dark"] {
 }
 
 body[data-theme="dark"] .custom-titlebar {
-  background: linear-gradient(135deg, #333a6c 0%, #3b255e 100%);
+  background: linear-gradient(135deg, rgba(51,58,108,0.82) 0%, rgba(59,37,94,0.82) 100%);
   color: #fff;
 }
 body[data-theme="dark"] .titlebar-btn,
@@ -1093,7 +1137,7 @@ body[data-theme="dark"] .titlebar-center { color: #fff; }
 body[data-theme="dark"] .sidebar { background-color: #1a1a1a; border-right: 1px solid #2a2a2a; }
 body[data-theme="dark"] .sidebar-panel:first-child { border-bottom: 1px solid #2a2a2a; }
 
-body[data-theme="dark"] .editor-header { background-color: #161616; border-bottom: 1px solid #2a2a2a; }
+body[data-theme="dark"] .editor-header { background-color: rgba(22,22,22,0.72); border-bottom: 1px solid #2a2a2a; -webkit-backdrop-filter: blur(var(--panel-blur, 8px)); backdrop-filter: blur(var(--panel-blur, 8px)); }
 body[data-theme="dark"] .preview-panel { background-color: #121212; }
 
 body[data-theme="dark"] .markdown-preview { color: #e6e6e6; }
@@ -1120,7 +1164,7 @@ body[data-theme="dark"] .resizer:hover,
 body[data-theme="dark"] .editor-resizer:hover,
 body[data-theme="dark"] #panelResizer:hover { background-color: #3a3a3a; }
 
-body[data-theme="dark"] .modal-content { background-color: #1f1f1f; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+body[data-theme="dark"] .modal-content { background-color: rgba(31,31,31,0.82); box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
 body[data-theme="dark"] .modal-content h3,
 body[data-theme="dark"] .modal-message { color: #e6e6e6; }
 body[data-theme="dark"] .modal-content input { background: #121212; border: 1px solid #2a2a2a; color: #e6e6e6; }
@@ -1137,3 +1181,71 @@ body[data-theme="dark"] .preview-mode-buttons { background-color: #2a2a2a; }
 body[data-theme="dark"] .mode-btn { color: #ddd; }
 body[data-theme="dark"] .mode-btn:hover { background-color: #3a3a3a; }
 body[data-theme="dark"] .mode-btn.active { background-color: #2563eb; color: #fff; }
+
+/* ===== 背景与半透明的后置增强覆盖，确保不被上面的主题块反向覆盖 ===== */
+/* 当启用图片或纯色背景且面板半透明时，编辑区与预览控制条不要呈现纯白 */
+body.translucent-panels #editor { background-color: rgba(18,18,18,0.55) !important; color: #eaeaea; }
+body[data-theme="light"].translucent-panels #editor { background-color: rgba(255,255,255,0.65) !important; color: #111; }
+
+body.translucent-panels .editor-panel { background-color: transparent !important; }
+body.translucent-panels .preview-panel { background-color: rgba(18,18,18,0.45) !important; }
+body[data-theme="light"].translucent-panels .preview-panel { background-color: rgba(255,255,255,0.6) !important; }
+
+body.translucent-panels .preview-mode-buttons { background-color: rgba(0,0,0,0.35) !important; }
+body[data-theme="light"].translucent-panels .preview-mode-buttons { background-color: rgba(255,255,255,0.6) !important; }
+
+/* 让分隔条也融入背景 */
+/* 分隔条颜色：中间垂直分隔在不同主题使用明确色值 */
+body[data-theme="light"] .editor-resizer { background-color: #DDDDDD !important; }
+body[data-theme="dark"] .editor-resizer { background-color: #2A2A2A !important; }
+/* 横向分隔保留此前主题差异（半透明即可） */
+body[data-theme="light"].translucent-panels #panelResizer { background-color: rgba(255,255,255,0.18) !important; }
+body[data-theme="dark"].translucent-panels #panelResizer { background-color: rgba(0,0,0,0.55) !important; }
+
+/* 增加中线以增强可见度（不影响拖拽区域宽度） */
+/* 中间竖线按主题微调，增强对比 */
+body[data-theme="light"] .editor-resizer::after,
+body[data-theme="dark"] .editor-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 100%;
+  background-color: rgba(0,0,0,0.9);
+  pointer-events: none;
+}
+body[data-theme="dark"] .editor-resizer::after { background-color: rgba(0,0,0,0.9); }
+body[data-theme="light"] .editor-resizer::after { background-color: rgba(0,0,0,0.25); }
+
+/* 将模糊应用到编辑与预览区域，使背景在这些关键区域也被柔化 */
+body.translucent-panels #editor,
+body.translucent-panels .editor-panel,
+body.translucent-panels .preview-panel,
+body.translucent-panels .preview-mode-buttons {
+  -webkit-backdrop-filter: blur(var(--panel-blur, 8px));
+  backdrop-filter: blur(var(--panel-blur, 8px));
+}
+
+/* 让编辑器头部在半透明时也参与模糊（两种主题均生效） */
+body.translucent-panels .editor-header {
+  -webkit-backdrop-filter: blur(var(--panel-blur, 8px));
+  backdrop-filter: blur(var(--panel-blur, 8px));
+}
+
+/* 修复：暗色 + 半透明 时左侧栏仍为纯黑，改用半透明并应用模糊 */
+body[data-theme="dark"].translucent-panels .sidebar {
+  background-color: rgba(18,18,18,0.58) !important;
+  border-right-color: rgba(255,255,255,0.08) !important;
+  -webkit-backdrop-filter: blur(var(--panel-blur, 8px));
+  backdrop-filter: blur(var(--panel-blur, 8px));
+}
+body[data-theme="dark"].translucent-panels .sidebar-panel:first-child {
+  border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+
+/* range 样式微调 */
+.setting-range { display:flex; align-items:center; gap:10px; min-width:0; }
+.setting-range input[type="range"] { width: 180px; }
+.range-value { font-size: 12px; opacity: .8; min-width: 36px; text-align: right; }

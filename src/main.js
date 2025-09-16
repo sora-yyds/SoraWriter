@@ -292,6 +292,49 @@ function changeLanguage(language) {
   mainWindow.webContents.send('language-change', language);
 }
 
+// 选择背景图片（顶层注册，避免未注册错误）
+ipcMain.handle('pick-image', async () => {
+  const win = BrowserWindow.getFocusedWindow() || mainWindow;
+  const result = await dialog.showOpenDialog(win || undefined, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'] }
+    ]
+  });
+  if (!result.canceled && result.filePaths && result.filePaths[0]) {
+    const filePath = result.filePaths[0];
+    try {
+      const ext = (path.extname(filePath).toLowerCase().replace('.', '')) || 'png';
+      const mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' };
+      const mime = mimeMap[ext] || 'application/octet-stream';
+      const buf = await fs.promises.readFile(filePath);
+      const base64 = buf.toString('base64');
+      const dataUrl = `data:${mime};base64,${base64}`;
+      return { filePath, dataUrl };
+    } catch (e) {
+      console.error('读取图片失败:', e);
+      return { filePath };
+    }
+  }
+  return { filePath: '' };
+});
+
+// 将本地图片转换为 data URL（用于启动时从路径恢复）
+ipcMain.handle('image-to-dataurl', async (event, filePath) => {
+  try {
+    if (!filePath) return { ok: false };
+    const ext = (path.extname(filePath).toLowerCase().replace('.', '')) || 'png';
+    const mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' };
+    const mime = mimeMap[ext] || 'application/octet-stream';
+    const buf = await fs.promises.readFile(filePath);
+    const base64 = buf.toString('base64');
+    return { ok: true, dataUrl: `data:${mime};base64,${base64}` };
+  } catch (e) {
+    console.error('image-to-dataurl 失败:', e);
+    return { ok: false, error: e.message };
+  }
+});
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -425,6 +468,8 @@ app.whenReady().then(() => {
   ipcMain.handle('window-is-maximized', () => {
     return mainWindow ? mainWindow.isMaximized() : false;
   });
+
+  // 选择背景图片：已在顶层注册
 
   // 应用启动完成事件
   ipcMain.on('app-ready', () => {

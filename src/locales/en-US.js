@@ -96,4 +96,13 @@ export default {
   settings_save_failed: 'Failed to save settings',
   // Menu
   menu_settings: 'Settings'
+  ,
+  // Background settings
+  background: 'Background',
+  bg_default: 'Default',
+  bg_color: 'Color',
+  bg_image: 'Image',
+  choose_image: 'Choose Image',
+  translucent_panels: 'Translucent panels',
+  background_blur: 'Background blur'
 };

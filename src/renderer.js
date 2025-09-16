@@ -320,6 +320,12 @@ let titlebarController = null;
 // 主题监听器
 let _systemThemeMedia = null;
 const THEME_KEY = 'sora.theme';
+const BG_TYPE_KEY = 'sora.bg.type'; // default | color | image
+const BG_COLOR_KEY = 'sora.bg.color';
+const BG_IMAGE_KEY = 'sora.bg.image';
+const BG_IMAGE_DATAURL_KEY = 'sora.bg.image.dataurl';
+const PANELS_TRANSLUCENT_KEY = 'sora.panels.translucent';
+const BG_BLUR_KEY = 'sora.bg.blur'; // 模糊强度，单位 px（0-20）
 
 function applyTheme(preference) {
   const pref = preference || localStorage.getItem(THEME_KEY) || 'system';
@@ -340,6 +346,63 @@ function applyTheme(preference) {
     document.body.dataset.theme = pref;
   }
   try { localStorage.setItem(THEME_KEY, pref); } catch {}
+}
+
+function getStoredBackground() {
+  return {
+    type: localStorage.getItem(BG_TYPE_KEY) || 'default',
+    color: localStorage.getItem(BG_COLOR_KEY) || (document.body.dataset.theme === 'dark' ? '#121212' : '#ffffff'),
+  image: localStorage.getItem(BG_IMAGE_KEY) || '',
+  imageDataUrl: localStorage.getItem(BG_IMAGE_DATAURL_KEY) || '',
+  translucent: true,
+  blur: parseInt(localStorage.getItem(BG_BLUR_KEY) || '8', 10)
+  };
+}
+
+async function applyBackground(opts) {
+  const { type, color, image, imageDataUrl, translucent, blur } = opts || getStoredBackground();
+  document.body.dataset.bgType = type;
+  const blurPx = Math.max(0, Math.min(20, Number.isFinite(blur) ? blur : 8));
+  // 设置全局模糊变量（用于标题栏、抽屉、面板等）
+  document.documentElement.style.setProperty('--panel-blur', `${blurPx}px`);
+  if (type === 'color') {
+    document.documentElement.style.setProperty('--app-custom-bg', color || '#ffffff');
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundColor = 'var(--app-custom-bg)';
+  } else if (type === 'image') {
+    if (image || imageDataUrl) {
+      let url = imageDataUrl;
+      if (!url && image && window.electronAPI && window.electronAPI.imageToDataUrl) {
+        try {
+          const res = await window.electronAPI.imageToDataUrl(image);
+          if (res && res.ok && res.dataUrl) {
+            url = res.dataUrl;
+            try { localStorage.setItem(BG_IMAGE_DATAURL_KEY, url); } catch {}
+          }
+        } catch {}
+      }
+      // 回退到 file:// 方案
+      if (!url && image) {
+        if (/^[a-zA-Z]:\\/.test(image) || image.startsWith('\\\\')) {
+          const normalized = image.replace(/\\/g, '/');
+          url = `file:///${normalized}`;
+        } else if (/^\//.test(image)) {
+          url = `file://${image}`;
+        }
+      }
+      document.body.style.backgroundImage = url ? `url("${url}")` : '';
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.backgroundAttachment = 'fixed';
+      document.body.style.backgroundColor = 'transparent';
+    }
+  } else {
+    // default
+    document.body.style.backgroundImage = '';
+    document.body.style.backgroundColor = '';
+  }
+  document.body.classList.toggle('translucent-panels', !!translucent);
 }
 
 // 初始化编辑器
@@ -402,6 +465,9 @@ ${t('welcome_content') || '欢迎来到 SoraWriter Markdown 编辑器！开始�
 
   // 应用主题（跟随系统/持久化）
   applyTheme();
+  // 应用背景
+  try { localStorage.setItem(PANELS_TRANSLUCENT_KEY, '1'); } catch {}
+  applyBackground();
 }
 
 // 处理编辑器输入
@@ -1197,6 +1263,34 @@ function createSettingsOverlay() {
                 <option value="dark">${t('dark') || '深色'}</option>
               </select>
             </label>
+            <div class="setting-item setting-bg">
+              <div class="setting-row">
+                <span class="setting-label">${t('background') || '背景'}</span>
+                <select id="settingBgType">
+                  <option value="default">${t('bg_default') || '默认'}</option>
+                  <option value="color">${t('bg_color') || '纯色'}</option>
+                  <option value="image">${t('bg_image') || '图片'}</option>
+                </select>
+              </div>
+              <div class="setting-row" id="bgColorRow">
+                <span class="setting-sub">${t('bg_color') || '纯色'}</span>
+                <input type="color" id="settingBgColor" value="#121212" />
+              </div>
+              <div class="setting-row" id="bgImageRow">
+                <span class="setting-sub">${t('bg_image') || '图片'}</span>
+                <div class="setting-filepick">
+                  <button class="btn-secondary" id="settingBgPickImage">${t('choose_image') || '选择图片'}</button>
+                  <span id="settingBgImageName" class="file-name-hint"></span>
+                </div>
+              </div>
+              <div class="setting-row" id="bgBlurRow">
+                <span class="setting-sub">${t('background_blur') || '背景模糊'}</span>
+                <div class="setting-range">
+                  <input type="range" id="settingBgBlur" min="0" max="20" step="1" />
+                  <span id="settingBgBlurVal" class="range-value">8px</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="settings-page" data-page="files">
@@ -1248,9 +1342,13 @@ function createSettingsOverlay() {
     const autoSave = overlay.querySelector('#settingAutoSave')?.checked;
     const fontSize = parseInt(overlay.querySelector('#settingEditorFontSize')?.value || '14', 10);
     const lineWrap = overlay.querySelector('#settingLineWrap')?.checked;
-    const livePreview = overlay.querySelector('#settingLivePreview')?.checked;
+  const livePreview = overlay.querySelector('#settingLivePreview')?.checked;
   const theme = overlay.querySelector('#settingTheme')?.value;
     const defaultExt = overlay.querySelector('#settingDefaultExt')?.value || '.md';
+  const bgType = overlay.querySelector('#settingBgType')?.value || 'default';
+  const bgColor = overlay.querySelector('#settingBgColor')?.value || '#121212';
+  const bgImage = overlay.dataset.selectedImage || '';
+  const bgBlur = parseInt(overlay.querySelector('#settingBgBlur')?.value || '8', 10);
 
     try {
       if (lang) {
@@ -1267,6 +1365,18 @@ function createSettingsOverlay() {
   applyTheme(theme || 'system');
       window.__soraDefaultExt__ = defaultExt.startsWith('.') ? defaultExt : `.${defaultExt}`;
 
+      // 存储并应用背景
+      try {
+        localStorage.setItem(BG_TYPE_KEY, bgType);
+        localStorage.setItem(BG_COLOR_KEY, bgColor);
+        if (bgImage) localStorage.setItem(BG_IMAGE_KEY, bgImage); else localStorage.removeItem(BG_IMAGE_KEY);
+        // 默认始终开启半透明
+        localStorage.setItem(PANELS_TRANSLUCENT_KEY, '1');
+        localStorage.setItem(BG_BLUR_KEY, String(Math.max(0, Math.min(20, bgBlur))));
+      } catch {}
+      // 即刻应用（若 dataUrl 已缓存则会优先使用），默认 translucent 始终为 true
+      applyBackground({ type: bgType, color: bgColor, image: bgImage, translucent: true, blur: bgBlur });
+
       updateUILanguage();
       updatePreview();
 
@@ -1277,6 +1387,61 @@ function createSettingsOverlay() {
       showCustomAlert(t('settings_save_failed') || '保存设置失败');
     }
   });
+
+  // 背景：选择图片
+  const pickBtn = overlay.querySelector('#settingBgPickImage');
+  const imgName = overlay.querySelector('#settingBgImageName');
+  if (pickBtn && window.electronAPI && window.electronAPI.pickImage) {
+    pickBtn.addEventListener('click', async () => {
+      const result = await window.electronAPI.pickImage();
+      if (result && result.filePath) {
+        overlay.dataset.selectedImage = result.filePath;
+        if (result.dataUrl) {
+          try { localStorage.setItem(BG_IMAGE_DATAURL_KEY, result.dataUrl); } catch {}
+        }
+        imgName.textContent = result.filePath.split(/[/\\]/).pop();
+      }
+    });
+  }
+
+  // 背景：根据类型显示/隐藏对应行
+  const typeSel2 = overlay.querySelector('#settingBgType');
+  const colorRow = overlay.querySelector('#bgColorRow');
+  const imageRow = overlay.querySelector('#bgImageRow');
+  const syncBgRows = () => {
+    const v = typeSel2?.value || 'default';
+    if (colorRow) colorRow.style.display = v === 'color' ? 'flex' : 'none';
+    if (imageRow) imageRow.style.display = v === 'image' ? 'flex' : 'none';
+  };
+  if (typeSel2) {
+    typeSel2.addEventListener('change', syncBgRows);
+  }
+
+  // 回显已保存的背景设置
+  const bg = getStoredBackground();
+  const typeSel = overlay.querySelector('#settingBgType');
+  const colorInp = overlay.querySelector('#settingBgColor');
+  if (typeSel) typeSel.value = bg.type;
+  if (colorInp) colorInp.value = bg.color;
+  if (imgName && bg.image) imgName.textContent = bg.image.split(/[/\\]/).pop();
+  // 初次同步行显隐
+  syncBgRows();
+
+  // 背景模糊：回显与联动
+  const blurInput = overlay.querySelector('#settingBgBlur');
+  const blurVal = overlay.querySelector('#settingBgBlurVal');
+  const setBlurUI = (v) => { if (blurVal) blurVal.textContent = `${v}px`; };
+  const initBlur = Math.max(0, Math.min(20, Number.isFinite(bg.blur) ? bg.blur : 8));
+  if (blurInput) {
+    blurInput.value = String(initBlur);
+    setBlurUI(initBlur);
+    blurInput.addEventListener('input', (e) => {
+      const v = parseInt(e.target.value || '8', 10);
+      setBlurUI(v);
+      // 即时预览模糊强度
+      document.documentElement.style.setProperty('--panel-blur', `${Math.max(0, Math.min(20, v))}px`);
+    });
+  }
 
   return overlay;
 }

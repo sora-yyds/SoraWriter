@@ -67,6 +67,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 设置页打开事件（主进程触发）
   onOpenSettings: (callback) => ipcRenderer.on('open-settings', callback),
+  // 选择图片
+  pickImage: () => ipcRenderer.invoke('pick-image'),
+  imageToDataUrl: (filePath) => ipcRenderer.invoke('image-to-dataurl', filePath),
   
   // 工具方法
   basename: (path) => path.split(/[\/\\]/).pop(),
