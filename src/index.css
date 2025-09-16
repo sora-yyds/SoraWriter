@@ -984,3 +984,156 @@ body {
   color: #555;
   white-space: pre-line; /* 支持换行符 */
 }
+
+/* 标题栏设置按钮微调 */
+.settings-btn { color: #fff; }
+
+/* Settings overlay & drawer */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  pointer-events: none;
+}
+.settings-overlay.open { pointer-events: auto; }
+
+.settings-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+.settings-overlay.open .settings-backdrop { opacity: 1; }
+
+.settings-drawer {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: min(420px, 92vw);
+  background: var(--panel-bg, #1e1e1e);
+  color: var(--fg, #ddd);
+  box-shadow: -8px 0 24px rgba(0,0,0,0.3);
+  transform: translateX(100%);
+  transition: transform .2s ease;
+  display: flex;
+  flex-direction: column;
+}
+.settings-overlay.open .settings-drawer { transform: translateX(0); }
+
+.settings-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.settings-title { margin: 0; font-size: 16px; }
+.settings-close-btn {
+  background: transparent; border: none; color: inherit; font-size: 20px; cursor: pointer;
+}
+
+.settings-body { display: flex; min-height: 0; flex: 1; }
+.settings-tabs {
+  width: 132px; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.08);
+  padding: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.settings-tab {
+  text-align: left; padding: 8px 10px; border: none; border-radius: 6px;
+  background: transparent; color: inherit; cursor: pointer;
+}
+.settings-tab.active { background: rgba(255,255,255,0.06); }
+
+.settings-content { flex: 1; padding: 12px 16px; overflow: auto; }
+.settings-page { display: none; }
+.settings-page.active { display: block; }
+
+.setting-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.06);
+}
+.setting-item input[type="number"],
+.setting-item input[type="text"],
+.setting-item select {
+  background: #2a2a2a; color: #eee; border: 1px solid #3a3a3a; border-radius: 6px;
+  padding: 6px 8px; min-width: 140px;
+}
+
+.settings-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.08);
+}
+.btn-primary, .btn-secondary {
+  padding: 6px 12px; border-radius: 6px; border: 1px solid transparent; cursor: pointer;
+}
+.btn-primary { background: #3b82f6; color: #fff; border-color: #2563eb; }
+.btn-secondary { background: transparent; color: inherit; border-color: rgba(255,255,255,0.18); }
+
+/* 主题占位（可与现有主题变量整合） */
+body[data-theme="light"] .settings-drawer { background: #fff; color: #222; }
+body[data-theme="light"] .setting-item input,
+body[data-theme="light"] .setting-item select { background: #fff; color: #222; border-color: #ddd; }
+
+/* 小屏兼容：抽屉顶到底铺满宽度 */
+@media (max-width: 640px) {
+  .settings-drawer { width: 100vw; }
+}
+
+/* =========== 主题：暗色覆盖 =========== */
+body[data-theme="dark"] {
+  background: #121212;
+  color: #e6e6e6;
+}
+
+body[data-theme="dark"] .custom-titlebar {
+  background: linear-gradient(135deg, #333a6c 0%, #3b255e 100%);
+  color: #fff;
+}
+body[data-theme="dark"] .titlebar-btn,
+body[data-theme="dark"] .app-title,
+body[data-theme="dark"] .titlebar-center { color: #fff; }
+
+body[data-theme="dark"] .sidebar { background-color: #1a1a1a; border-right: 1px solid #2a2a2a; }
+body[data-theme="dark"] .sidebar-panel:first-child { border-bottom: 1px solid #2a2a2a; }
+
+body[data-theme="dark"] .editor-header { background-color: #161616; border-bottom: 1px solid #2a2a2a; }
+body[data-theme="dark"] .preview-panel { background-color: #121212; }
+
+body[data-theme="dark"] .markdown-preview { color: #e6e6e6; }
+body[data-theme="dark"] .markdown-preview a { color: #3b82f6; }
+body[data-theme="dark"] .markdown-preview pre { background-color: #1e1e1e; }
+
+body[data-theme="dark"] .file-item .file-details { color: rgba(255,255,255,0.7); }
+
+body[data-theme="dark"] .file-item:hover,
+body[data-theme="dark"] .outline-item:hover,
+body[data-theme="dark"] .outline-h1:hover,
+body[data-theme="dark"] .outline-h2:hover,
+body[data-theme="dark"] .outline-h3:hover,
+body[data-theme="dark"] .outline-h4:hover,
+body[data-theme="dark"] .outline-h5:hover,
+body[data-theme="dark"] .outline-h6:hover { background-color: #262626; }
+
+body[data-theme="dark"] .file-item.active { background-color: #2563eb; color: #fff; }
+
+body[data-theme="dark"] .resizer,
+body[data-theme="dark"] .editor-resizer,
+body[data-theme="dark"] #panelResizer { background-color: #2a2a2a; }
+body[data-theme="dark"] .resizer:hover,
+body[data-theme="dark"] .editor-resizer:hover,
+body[data-theme="dark"] #panelResizer:hover { background-color: #3a3a3a; }
+
+body[data-theme="dark"] .modal-content { background-color: #1f1f1f; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+body[data-theme="dark"] .modal-content h3,
+body[data-theme="dark"] .modal-message { color: #e6e6e6; }
+body[data-theme="dark"] .modal-content input { background: #121212; border: 1px solid #2a2a2a; color: #e6e6e6; }
+body[data-theme="dark"] #cancelBtn { background-color: #161616; color: #e6e6e6; }
+body[data-theme="dark"] #cancelBtn:hover { background-color: #262626; }
+
+/* 修复：编辑器文本域在暗色下为白色的问题 */
+body[data-theme="dark"] #editor { background-color: #121212; color: #e6e6e6; caret-color: #e6e6e6; }
+body[data-theme="dark"] .editor-panel { background-color: #121212; }
+body[data-theme="dark"] #editor::placeholder { color: rgba(255,255,255,0.5); }
+
+/* 修复：右上角预览视图切换容器在暗色下太亮 */
+body[data-theme="dark"] .preview-mode-buttons { background-color: #2a2a2a; }
+body[data-theme="dark"] .mode-btn { color: #ddd; }
+body[data-theme="dark"] .mode-btn:hover { background-color: #3a3a3a; }
+body[data-theme="dark"] .mode-btn.active { background-color: #2563eb; color: #fff; }

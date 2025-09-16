@@ -70,4 +70,30 @@ export default {
   file_modified: '修改时间',
   file_created: '创建时间',
   just_now: '刚刚'
+  ,
+  // 设置相关
+  settings: '设置',
+  categories: '分类',
+  general: '通用',
+  editor: '编辑器',
+  preview: '预览',
+  appearance: '外观',
+  shortcuts: '快捷键',
+  language: '语言',
+  auto_save: '自动保存',
+  font_size: '字号',
+  line_wrap: '自动换行',
+  live_preview: '实时预览',
+  theme: '主题',
+  follow_system: '跟随系统',
+  light: '浅色',
+  dark: '深色',
+  default_save_ext: '默认扩展名',
+  shortcuts_hint: '在此查看或自定义常用快捷键（后续可扩展）。',
+  save: '保存',
+  close: '关闭',
+  settings_saved: '设置已保存',
+  settings_save_failed: '保存设置失败',
+  // 菜单项
+  menu_settings: '设置'
 };

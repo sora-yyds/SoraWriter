@@ -184,6 +184,11 @@ function initCustomTitlebar() {
 }
 
 // 显示文件名输入对话框
+function getDefaultExt() {
+  const ext = (window.__soraDefaultExt__ || '.md').trim();
+  return ext.startsWith('.') ? ext : `.${ext}`;
+}
+
 function showFileNameDialog(callback, defaultValue = 'new-file') {
   // 创建模态对话框
   const modal = document.createElement('div');
@@ -191,7 +196,7 @@ function showFileNameDialog(callback, defaultValue = 'new-file') {
   modal.innerHTML = `
     <div class="modal-content">
       <h3>${t('enter_filename') || '请输入文件名:'}</h3>
-      <input type="text" id="filenameInput" value="${defaultValue}.md" />
+      <input type="text" id="filenameInput" value="${defaultValue}${getDefaultExt()}" />
       <div class="modal-buttons">
         <button id="confirmBtn">${t('confirm') || '确定'}</button>
         <button id="cancelBtn">${t('cancel') || '取消'}</button>
@@ -207,8 +212,9 @@ function showFileNameDialog(callback, defaultValue = 'new-file') {
   
   // 自动选中文件名部分（不包括 .md 扩展名）
   const filename = input.value;
-  if (filename.endsWith('.md')) {
-    input.setSelectionRange(0, filename.length - 3);
+  const ext = getDefaultExt();
+  if (filename.endsWith(ext)) {
+    input.setSelectionRange(0, filename.length - ext.length);
   } else {
     input.select();
   }
@@ -311,6 +317,30 @@ let currentViewMode = 'split'; // 'split', 'edit', 'preview'
 
 // 自定义标题栏控制器
 let titlebarController = null;
+// 主题监听器
+let _systemThemeMedia = null;
+const THEME_KEY = 'sora.theme';
+
+function applyTheme(preference) {
+  const pref = preference || localStorage.getItem(THEME_KEY) || 'system';
+  // 清理旧监听
+  if (_systemThemeMedia) {
+    _systemThemeMedia.onchange = null;
+    _systemThemeMedia = null;
+  }
+  if (pref === 'system') {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const setByMedia = () => {
+      document.body.dataset.theme = media.matches ? 'dark' : 'light';
+    };
+    setByMedia();
+    media.onchange = setByMedia;
+    _systemThemeMedia = media;
+  } else if (pref === 'dark' || pref === 'light') {
+    document.body.dataset.theme = pref;
+  }
+  try { localStorage.setItem(THEME_KEY, pref); } catch {}
+}
 
 // 初始化编辑器
 async function initEditor() {
@@ -366,6 +396,12 @@ ${t('welcome_content') || '欢迎来到 SoraWriter Markdown 编辑器！开始�
   
   // 更新界面语言
   updateUILanguage();
+
+  // 初始化设置 UI
+  initSettingsUI();
+
+  // 应用主题（跟随系统/持久化）
+  applyTheme();
 }
 
 // 处理编辑器输入
@@ -383,7 +419,9 @@ function handleEditorInput() {
 
   // 生成新的大纲和预览
   generateOutline();
-  updatePreview();
+  if (window.__soraLivePreview__ !== false) {
+    updatePreview();
+  }
 
   updateUnsavedIndicator();
   updateWindowTitle();
@@ -474,6 +512,8 @@ function updateUILanguage() {
   
   if (minimizeBtn) minimizeBtn.title = t('minimize_window') || '最小化';
   if (closeBtn) closeBtn.title = t('close_window') || '关闭';
+  const settingsBtn = document.getElementById('settingsBtn');
+  if (settingsBtn) settingsBtn.title = t('settings') || '设置';
   
   // 最大化按钮的标题需要根据当前状态更新
   if (maximizeBtn && titlebarController && titlebarController.updateMaximizeButton) {
@@ -671,16 +711,18 @@ function createNewFile() {
   showFileNameDialog((filename) => {
     if (filename && filename.trim()) {
       let finalFilename = filename.trim();
-      if (!finalFilename.endsWith('.md')) {
-        finalFilename += '.md';
+      const ext = getDefaultExt();
+      if (!finalFilename.toLowerCase().endsWith(ext.toLowerCase())) {
+        finalFilename += ext;
       }
       
       // 检查文件名是否已存在，如果存在则添加数字后缀
       let uniqueFilename = finalFilename;
       let counter = 1;
       while (files[uniqueFilename]) {
-        const nameWithoutExt = finalFilename.replace('.md', '');
-        uniqueFilename = `${nameWithoutExt}-${counter}.md`;
+        const idx = finalFilename.toLowerCase().lastIndexOf(ext.toLowerCase());
+        const nameWithoutExt = idx > -1 ? finalFilename.slice(0, idx) : finalFilename;
+        uniqueFilename = `${nameWithoutExt}-${counter}${ext}`;
         counter++;
       }
       
@@ -1044,6 +1086,209 @@ function updatePreview() {
   const content = editor.value || '';
   const html = marked(content);
   preview.innerHTML = html;
+}
+
+// ========== 设置抽屉 ==========
+let settingsOverlay = null;
+
+function initSettingsUI() {
+  // 快捷键：Ctrl+, 打开设置
+  document.addEventListener('keydown', (e) => {
+    const isCtrlComma = (e.ctrlKey || e.metaKey) && e.key === ',';
+    if (isCtrlComma) {
+      e.preventDefault();
+      openSettings();
+    }
+  });
+
+  // 菜单触发（由主进程发送）
+  if (window.electronAPI && window.electronAPI.onOpenSettings) {
+    window.electronAPI.onOpenSettings(() => openSettings());
+  }
+
+  // 标题栏按钮
+  const btn = document.getElementById('settingsBtn');
+  if (btn) {
+    btn.addEventListener('click', openSettings);
+  }
+}
+
+function openSettings() {
+  if (!settingsOverlay) {
+    settingsOverlay = createSettingsOverlay();
+    document.body.appendChild(settingsOverlay);
+  }
+  settingsOverlay.classList.add('open');
+  activateSettingsTab('general');
+  // 同步选择框为当前主题偏好
+  const themeSel = settingsOverlay.querySelector('#settingTheme');
+  if (themeSel) {
+    const pref = localStorage.getItem(THEME_KEY) || 'system';
+    themeSel.value = pref;
+  }
+}
+
+function closeSettings() {
+  if (settingsOverlay) settingsOverlay.classList.remove('open');
+}
+
+function createSettingsOverlay() {
+  const overlay = document.createElement('div');
+  overlay.className = 'settings-overlay';
+  overlay.innerHTML = `
+    <div class="settings-backdrop"></div>
+    <aside class="settings-drawer" role="dialog" aria-modal="true" aria-label="${t('settings') || '设置'}">
+      <header class="settings-header">
+        <h2 class="settings-title">${t('settings') || '设置'}</h2>
+        <button class="settings-close-btn" id="closeSettingsBtn" aria-label="${t('close') || '关闭'}">×</button>
+      </header>
+      <div class="settings-body">
+        <nav class="settings-tabs" aria-label="${t('categories') || '分类'}">
+          <button class="settings-tab" data-tab="general">${t('general') || '通用'}</button>
+          <button class="settings-tab" data-tab="editor">${t('editor') || '编辑器'}</button>
+          <button class="settings-tab" data-tab="preview">${t('preview') || '预览'}</button>
+          <button class="settings-tab" data-tab="appearance">${t('appearance') || '外观'}</button>
+          <button class="settings-tab" data-tab="files">${t('files') || '文件'}</button>
+          <button class="settings-tab" data-tab="shortcuts">${t('shortcuts') || '快捷键'}</button>
+        </nav>
+        <section class="settings-content">
+          <div class="settings-page" data-page="general">
+            <h3>${t('general') || '通用'}</h3>
+            <label class="setting-item">
+              <span>${t('language') || '语言'}</span>
+              <select id="settingLanguage">
+                <option value="zh-CN">简体中文</option>
+                <option value="en-US">English</option>
+              </select>
+            </label>
+            <label class="setting-item">
+              <span>${t('auto_save') || '自动保存'}</span>
+              <input type="checkbox" id="settingAutoSave" />
+            </label>
+          </div>
+
+          <div class="settings-page" data-page="editor">
+            <h3>${t('editor') || '编辑器'}</h3>
+            <label class="setting-item">
+              <span>${t('font_size') || '字号'}</span>
+              <input type="number" id="settingEditorFontSize" min="10" max="28" step="1" value="14" />
+            </label>
+            <label class="setting-item">
+              <span>${t('line_wrap') || '自动换行'}</span>
+              <input type="checkbox" id="settingLineWrap" checked />
+            </label>
+          </div>
+
+          <div class="settings-page" data-page="preview">
+            <h3>${t('preview') || '预览'}</h3>
+            <label class="setting-item">
+              <span>${t('live_preview') || '实时预览'}</span>
+              <input type="checkbox" id="settingLivePreview" checked />
+            </label>
+          </div>
+
+          <div class="settings-page" data-page="appearance">
+            <h3>${t('appearance') || '外观'}</h3>
+            <label class="setting-item">
+              <span>${t('theme') || '主题'}</span>
+              <select id="settingTheme">
+                <option value="system">${t('follow_system') || '跟随系统'}</option>
+                <option value="light">${t('light') || '浅色'}</option>
+                <option value="dark">${t('dark') || '深色'}</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="settings-page" data-page="files">
+            <h3>${t('files') || '文件'}</h3>
+            <label class="setting-item">
+              <span>${t('default_save_ext') || '默认扩展名'}</span>
+              <input type="text" id="settingDefaultExt" value=".md" />
+            </label>
+          </div>
+
+          <div class="settings-page" data-page="shortcuts">
+            <h3>${t('shortcuts') || '快捷键'}</h3>
+            <p class="setting-hint">${t('shortcuts_hint') || '在此查看或自定义常用快捷键（后续可扩展）。'}</p>
+          </div>
+        </section>
+      </div>
+      <footer class="settings-footer">
+        <button class="btn-secondary" id="settingsCancelBtn">${t('cancel') || '取消'}</button>
+        <button class="btn-primary" id="settingsSaveBtn">${t('save') || '保存'}</button>
+      </footer>
+    </aside>
+  `;
+
+  // 关闭逻辑
+  const closeBtn = overlay.querySelector('#closeSettingsBtn');
+  const cancelBtn = overlay.querySelector('#settingsCancelBtn');
+  const saveBtn = overlay.querySelector('#settingsSaveBtn');
+  const backdrop = overlay.querySelector('.settings-backdrop');
+
+  const closeAll = () => closeSettings();
+  closeBtn.addEventListener('click', closeAll);
+  cancelBtn.addEventListener('click', closeAll);
+  backdrop.addEventListener('click', closeAll);
+  document.addEventListener('keydown', function escHandler(e) {
+    if (overlay.classList.contains('open') && e.key === 'Escape') {
+      e.preventDefault();
+      closeAll();
+    }
+  });
+
+  // 标签切换
+  overlay.querySelectorAll('.settings-tab').forEach(btn => {
+    btn.addEventListener('click', () => activateSettingsTab(btn.dataset.tab));
+  });
+
+  // 保存设置
+  saveBtn.addEventListener('click', () => {
+    const lang = overlay.querySelector('#settingLanguage')?.value;
+    const autoSave = overlay.querySelector('#settingAutoSave')?.checked;
+    const fontSize = parseInt(overlay.querySelector('#settingEditorFontSize')?.value || '14', 10);
+    const lineWrap = overlay.querySelector('#settingLineWrap')?.checked;
+    const livePreview = overlay.querySelector('#settingLivePreview')?.checked;
+  const theme = overlay.querySelector('#settingTheme')?.value;
+    const defaultExt = overlay.querySelector('#settingDefaultExt')?.value || '.md';
+
+    try {
+      if (lang) {
+        setLocale(lang);
+        if (window.electronAPI && window.electronAPI.changeLanguage) {
+          window.electronAPI.changeLanguage(lang);
+        }
+      }
+      if (editor) {
+        editor.style.fontSize = `${fontSize}px`;
+        editor.wrap = lineWrap ? 'soft' : 'off';
+      }
+  window.__soraLivePreview__ = livePreview !== false;
+  applyTheme(theme || 'system');
+      window.__soraDefaultExt__ = defaultExt.startsWith('.') ? defaultExt : `.${defaultExt}`;
+
+      updateUILanguage();
+      updatePreview();
+
+      showCustomAlert(t('settings_saved') || '设置已保存');
+      closeAll();
+    } catch (e) {
+      console.error('保存设置失败:', e);
+      showCustomAlert(t('settings_save_failed') || '保存设置失败');
+    }
+  });
+
+  return overlay;
+}
+
+function activateSettingsTab(tabName) {
+  if (!settingsOverlay) return;
+  settingsOverlay.querySelectorAll('.settings-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+  settingsOverlay.querySelectorAll('.settings-page').forEach(p => {
+    p.classList.toggle('active', p.dataset.page === tabName);
+  });
 }
 
 // 显示自定义确认对话框

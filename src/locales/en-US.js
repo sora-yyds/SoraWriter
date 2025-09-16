@@ -70,4 +70,30 @@ export default {
   file_modified: 'Modified',
   file_created: 'Created',
   just_now: 'Just now'
+  ,
+  // Settings
+  settings: 'Settings',
+  categories: 'Categories',
+  general: 'General',
+  editor: 'Editor',
+  preview: 'Preview',
+  appearance: 'Appearance',
+  shortcuts: 'Shortcuts',
+  language: 'Language',
+  auto_save: 'Auto Save',
+  font_size: 'Font Size',
+  line_wrap: 'Line Wrap',
+  live_preview: 'Live Preview',
+  theme: 'Theme',
+  follow_system: 'Follow System',
+  light: 'Light',
+  dark: 'Dark',
+  default_save_ext: 'Default Extension',
+  shortcuts_hint: 'View or customize common shortcuts here (expand later).',
+  save: 'Save',
+  close: 'Close',
+  settings_saved: 'Settings saved',
+  settings_save_failed: 'Failed to save settings',
+  // Menu
+  menu_settings: 'Settings'
 };

@@ -65,6 +65,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 应用启动状态
   appReady: () => ipcRenderer.send('app-ready'),
   
+  // 设置页打开事件（主进程触发）
+  onOpenSettings: (callback) => ipcRenderer.on('open-settings', callback),
+  
   // 工具方法
   basename: (path) => path.split(/[\/\\]/).pop(),
   dirname: (path) => path.substring(0, path.lastIndexOf(/[\/\\]/)),

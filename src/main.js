@@ -240,7 +240,15 @@ function createMenu() {
         { label: t('menu_zoom_in'), role: 'zoomin' },
         { label: t('menu_zoom_out'), role: 'zoomout' },
         { type: 'separator' },
-        { label: t('menu_toggle_fullscreen'), role: 'togglefullscreen' }
+        { label: t('menu_toggle_fullscreen'), role: 'togglefullscreen' },
+        { type: 'separator' },
+        {
+          label: t('menu_settings') || 'Settings',
+          accelerator: 'CmdOrCtrl+,',
+          click() {
+            if (mainWindow) mainWindow.webContents.send('open-settings');
+          }
+        }
       ]
     },
     {
