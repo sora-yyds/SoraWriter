@@ -1745,5 +1745,3 @@ async function renameFile(oldFilename) {
     }
   }, oldFilename.replace('.md', ''));
 }
-
-// 原来的初始化代码已移动到新的启动流程中

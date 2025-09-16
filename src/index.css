@@ -1037,7 +1037,7 @@ body {
 .settings-drawer {
   position: absolute;
   top: 0; right: 0; bottom: 0;
-  width: min(420px, 92vw);
+  width: clamp(320px, 40vw, 720px);
   background: color-mix(in srgb, var(--panel-bg, #1e1e1e) 82%, transparent);
   color: var(--fg, #ddd);
   box-shadow: -8px 0 24px rgba(0,0,0,0.3);
@@ -1115,10 +1115,6 @@ body[data-theme="light"] .settings-drawer { background: #fff; color: #222; }
 body[data-theme="light"] .setting-item input,
 body[data-theme="light"] .setting-item select { background: #fff; color: #222; border-color: #ddd; }
 
-/* 小屏兼容：抽屉顶到底铺满宽度 */
-@media (max-width: 640px) {
-  .settings-drawer { width: 100vw; }
-}
 
 /* =========== 主题：暗色覆盖 =========== */
 body[data-theme="dark"] {
