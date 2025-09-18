@@ -263,10 +263,21 @@ function showFileNameDialog(callback, defaultValue = 'new-file') {
 }
 
 import './index.css';
+import 'katex/dist/katex.min.css';
+import renderMathInElement from 'katex/contrib/auto-render';
+import katex from 'katex';
+import mermaid from 'mermaid';
+import flowchart from 'flowchart.js';
 import { t, setLocale } from './utils/i18n.js';
 import { marked } from 'marked';
 
 console.log('👋 This message is being logged by "renderer.js", included via webpack');
+
+// 配置 marked 以确保代码块带 language- 类名，并启用常见特性
+marked.setOptions({
+  gfm: true,
+  breaks: true
+});
 
 // 当前打开的文件
 let currentFile = 'welcome.md';
@@ -1144,12 +1155,110 @@ function setViewMode(mode) {
 }
 
 // 更新Markdown预览
-function updatePreview() {
+let __uid = 0;
+const uid = (p='id') => `${p}-${Date.now().toString(36)}-${(__uid++).toString(36)}`;
+
+async function updatePreview() {
   if (!preview) return;
   
   const content = editor.value || '';
   const html = marked(content);
   preview.innerHTML = html;
+
+  // 数学公式渲染（KaTeX 自动扫描）
+  try {
+    renderMathInElement(preview, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false },
+      ],
+      throwOnError: false,
+      strict: 'ignore'
+    });
+  } catch (e) {
+    console.error('KaTeX 渲染出错:', e);
+  }
+
+  // 将 math/latex/katex 代码块转换为 KaTeX 渲染块（显示模式）
+  try {
+    const mathCodes = preview.querySelectorAll('code.language-math, code.language-latex, code.language-katex');
+    mathCodes.forEach(codeEl => {
+      const pre = codeEl.closest('pre');
+      const tex = codeEl.textContent || '';
+      const wrap = document.createElement('div');
+      wrap.className = 'katex-block';
+      try {
+        katex.render(tex, wrap, { displayMode: true, throwOnError: false, strict: 'ignore' });
+        if (pre) pre.replaceWith(wrap); else codeEl.replaceWith(wrap);
+      } catch (err) {
+        console.error('KaTeX 代码块渲染失败:', err);
+      }
+    });
+  } catch (e) {
+    console.error('KaTeX 代码块转换出错:', e);
+  }
+
+  // Mermaid 渲染：处理 language-mermaid 以及将 seq/sequence 映射为 mermaid 的 sequenceDiagram
+  try {
+    const mermaidCodes = preview.querySelectorAll('code.language-mermaid, code.language-seq, code.language-sequence, code.language-sequence-diagram');
+    mermaidCodes.forEach(codeEl => {
+      const pre = codeEl.closest('pre');
+      if (!pre) return;
+      const container = document.createElement('div');
+      container.className = 'mermaid';
+      const raw = codeEl.textContent || '';
+      // 将 seq/sequence 语言映射为 mermaid 的 sequenceDiagram 语法
+      const isSeq = codeEl.classList.contains('language-seq') || codeEl.classList.contains('language-sequence') || codeEl.classList.contains('language-sequence-diagram');
+      const text = isSeq && !/^\s*sequenceDiagram/.test(raw) ? `sequenceDiagram\n${raw}` : raw;
+      container.textContent = text;
+      pre.replaceWith(container);
+    });
+
+    // 初始化并渲染 Mermaid 图
+    const theme = (document.body.dataset.theme || 'light') === 'dark' ? 'dark' : 'default';
+    mermaid.initialize({ startOnLoad: false, theme });
+    const mermaidEls = preview.querySelectorAll('.mermaid');
+    if (mermaidEls.length > 0) {
+      if (typeof mermaid.run === 'function') {
+        await mermaid.run({ querySelector: '#preview .mermaid' });
+      } else if (typeof mermaid.init === 'function') {
+        // 兼容旧 API
+        mermaid.init(undefined, mermaidEls);
+      }
+    }
+  } catch (e) {
+    console.error('Mermaid 渲染出错:', e);
+  }
+
+  // flowchart.js 渲染：language-flow / language-flowchart
+  try {
+    const flowCodes = preview.querySelectorAll('code.language-flow, code.language-flowchart');
+    flowCodes.forEach(codeEl => {
+      const pre = codeEl.closest('pre');
+      const txt = codeEl.textContent || '';
+      const container = document.createElement('div');
+      const id = uid('flow');
+      container.id = id;
+      container.className = 'flowchart-diagram';
+      if (pre) pre.replaceWith(container);
+      try {
+        const chart = flowchart.parse(txt);
+        chart.drawSVG(id, {
+          // 可调整主题颜色
+          'line-width': 2,
+          'font-size': 14,
+        });
+      } catch (err) {
+        console.error('flowchart.js 渲染失败:', err);
+      }
+    });
+  } catch (e) {
+    console.error('flowchart.js 渲染出错:', e);
+  }
+
+  // 序列图已由 Mermaid 处理
 }
 
 // ========== 设置抽屉 ==========

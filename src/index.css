@@ -1241,6 +1241,15 @@ body[data-theme="dark"].translucent-panels .sidebar-panel:first-child {
   border-bottom-color: rgba(255,255,255,0.08) !important;
 }
 
+/* Mermaid 图布局优化 */
+.markdown-preview .mermaid {
+  display: block;
+  overflow: hidden;
+}
+.markdown-preview .mermaid svg {
+  max-width: 100%;
+}
+
 /* range 样式微调 */
 .setting-range { display:flex; align-items:center; gap:10px; min-width:0; }
 .setting-range input[type="range"] { width: 180px; }
