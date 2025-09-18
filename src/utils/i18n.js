@@ -24,6 +24,11 @@ function setLocale(locale) {
   return false;
 }
 
+// 获取当前语言代码
+function getCurrentLocale() {
+  return currentLocale;
+}
+
 // 获取翻译文本
 function t(key) {
   const locale = getLocale();
@@ -38,6 +43,7 @@ function getSupportedLocales() {
 export {
   getLocale,
   setLocale,
+  getCurrentLocale,
   t,
   getSupportedLocales
 };

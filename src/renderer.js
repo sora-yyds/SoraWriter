@@ -268,7 +268,7 @@ import renderMathInElement from 'katex/contrib/auto-render';
 import katex from 'katex';
 import mermaid from 'mermaid';
 import flowchart from 'flowchart.js';
-import { t, setLocale } from './utils/i18n.js';
+import { t, setLocale, getCurrentLocale } from './utils/i18n.js';
 import { marked } from 'marked';
 
 console.log('👋 This message is being logged by "renderer.js", included via webpack');
@@ -1439,6 +1439,8 @@ function createSettingsOverlay() {
 
   // 保存设置
   saveBtn.addEventListener('click', () => {
+  // 在读取设置前，快照当前编辑器内容，防止后续 UI 操作覆盖
+  const snapshotContent = editor ? editor.value : '';
     const lang = overlay.querySelector('#settingLanguage')?.value;
     const autoSave = overlay.querySelector('#settingAutoSave')?.checked;
     const fontSize = parseInt(overlay.querySelector('#settingEditorFontSize')?.value || '14', 10);
@@ -1452,7 +1454,7 @@ function createSettingsOverlay() {
   const bgBlur = parseInt(overlay.querySelector('#settingBgBlur')?.value || '8', 10);
 
     try {
-      if (lang) {
+      if (lang && lang !== getCurrentLocale()) {
         setLocale(lang);
         if (window.electronAPI && window.electronAPI.changeLanguage) {
           window.electronAPI.changeLanguage(lang);
@@ -1478,7 +1480,11 @@ function createSettingsOverlay() {
       // 即刻应用（若 dataUrl 已缓存则会优先使用），默认 translucent 始终为 true
       applyBackground({ type: bgType, color: bgColor, image: bgImage, translucent: true, blur: bgBlur });
 
-      updateUILanguage();
+  updateUILanguage();
+  // 恢复快照内容，保证未保存编辑不丢失
+  if (editor) editor.value = snapshotContent;
+  // 同步预览与大纲
+  generateOutline();
   updatePreview();
 
       showCustomAlert(t('settings_saved') || '设置已保存');
@@ -1669,10 +1675,18 @@ function showCustomAlert(message, callback = null) {
 // 处理语言切换
 window.electronAPI.onLanguageChange(async (event, language) => {
   setLocale(language);
+  const currentUnsaved = currentFile && !isFileSaved;
   updateUILanguage();
   updateWindowTitle();
-  
-  // 重新加载welcome文件（如果当前文件是welcome.md）
+
+  // 若当前是 welcome.md 且有未保存内容，则不覆盖编辑器内容，只更新 UI 文案
+  if (currentFile === 'welcome.md' && currentUnsaved) {
+    generateOutline();
+    updatePreview();
+    return;
+  }
+
+  // 否则允许重载 welcome 文件文案（仅当正在查看 welcome.md）
   if (currentFile === 'welcome.md') {
     try {
       const welcomeContent = await window.electronAPI.readWelcomeFile();
@@ -1682,8 +1696,6 @@ window.electronAPI.onLanguageChange(async (event, language) => {
         filePath: null,
         isDirty: false
       };
-      
-      // 如果当前正在查看welcome文件，更新编辑器内容
       editor.value = welcomeContent;
       updatePreview();
       generateOutline();
@@ -1691,7 +1703,6 @@ window.electronAPI.onLanguageChange(async (event, language) => {
       console.error('重新加载welcome文件失败:', error);
     }
   }
-  
   // 注意：菜单会由主进程重新创建，这里只需更新渲染进程中的界面
 });
 
