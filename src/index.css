@@ -1031,6 +1031,9 @@ body {
   background: rgba(0,0,0,0.35);
   opacity: 0;
   transition: opacity .18s ease;
+  /* 让设置遮罩层也应用背景模糊 */
+  -webkit-backdrop-filter: blur(var(--panel-blur, 8px));
+  backdrop-filter: blur(var(--panel-blur, 8px));
 }
 .settings-overlay.open .settings-backdrop { opacity: 1; }
 
@@ -1111,7 +1114,11 @@ body[data-theme="light"] .settings-footer { border-top-color: rgba(0,0,0,0.08); 
 body[data-theme="light"] .setting-item { border-bottom-color: rgba(0,0,0,0.06); }
 
 /* 主题占位（可与现有主题变量整合） */
-body[data-theme="light"] .settings-drawer { background: #fff; color: #222; }
+/* 亮色主题：让设置抽屉半透明，才能看到 backdrop 的模糊效果 */
+body[data-theme="light"] .settings-drawer {
+  background: color-mix(in srgb, #ffffff 82%, transparent);
+  color: #222;
+}
 body[data-theme="light"] .setting-item input,
 body[data-theme="light"] .setting-item select { background: #fff; color: #222; border-color: #ddd; }
 

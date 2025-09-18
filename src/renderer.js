@@ -27,16 +27,21 @@ class SplashScreen {
     }
     
     console.log('开始隐藏启动画面...');
+    // 先让应用内容显示（切到 loaded），再淡出闪屏，避免看到纯背景
+    document.body.classList.remove('loading');
+    document.body.classList.add('loaded');
+    const app = document.querySelector('.app-content');
+    if (app) app.style.visibility = 'visible';
+
+    // 然后执行闪屏淡出动画；淡出期间下方应用已可见，实现交叠过渡
     this.isHidden = true;
     this.splashElement.classList.add('fade-out');
-    
+
     setTimeout(() => {
       if (this.splashElement) {
         this.splashElement.style.display = 'none';
         console.log('启动画面已完全隐藏');
       }
-      document.body.classList.remove('loading');
-      document.body.classList.add('loaded');
       console.log('应用内容已显示');
     }, 500); // 与CSS动画时间一致
   }
@@ -49,6 +54,8 @@ class SplashScreen {
     this.splashElement.classList.remove('fade-out');
     document.body.classList.add('loading');
     document.body.classList.remove('loaded');
+  const app = document.querySelector('.app-content');
+  if (app) app.style.visibility = 'hidden';
   }
 }
 

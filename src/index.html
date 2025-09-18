@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoraWriter Markdown Editor</title>
+    <style>
+      /* Critical inline to avoid initial flash before external CSS loads */
+      html,body{margin:0;padding:0;height:100%}
+      .splash-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;background:#4b6cb7;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff}
+      /* Ensure logo and loader have proper size before external CSS */
+      .splash-logo{width:80px;height:80px;margin-bottom:20px}
+      .splash-title{font-size:28px;font-weight:700;margin:0 0 8px}
+      .splash-subtitle{font-size:14px;opacity:.9;margin:0 0 20px}
+      .splash-loader{width:36px;height:36px;border:3px solid rgba(255,255,255,.3);border-top:3px solid #fff;border-radius:50%;animation:spin 1s linear infinite}
+      @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+      body.loading .app-content{visibility:hidden}
+    </style>
     <link rel="stylesheet" href="index.css">
   </head>
   <body class="loading">
@@ -19,8 +31,8 @@
       <div class="splash-loader"></div>
     </div>
 
-    <!-- 应用主体内容 -->
-    <div class="app-content">
+  <!-- 应用主体内容 -->
+  <div class="app-content">
     <!-- 自定义标题栏 -->
     <div class="custom-titlebar">
       <div class="titlebar-drag-region">
