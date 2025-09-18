@@ -485,9 +485,7 @@ function handleEditorInput() {
 
   // 生成新的大纲和预览
   generateOutline();
-  if (window.__soraLivePreview__ !== false) {
-    updatePreview();
-  }
+  updatePreview();
 
   updateUnsavedIndicator();
   updateWindowTitle();
@@ -1212,7 +1210,7 @@ function createSettingsOverlay() {
         <nav class="settings-tabs" aria-label="${t('categories') || '分类'}">
           <button class="settings-tab" data-tab="general">${t('general') || '通用'}</button>
           <button class="settings-tab" data-tab="editor">${t('editor') || '编辑器'}</button>
-          <button class="settings-tab" data-tab="preview">${t('preview') || '预览'}</button>
+          
           <button class="settings-tab" data-tab="appearance">${t('appearance') || '外观'}</button>
           <button class="settings-tab" data-tab="files">${t('files') || '文件'}</button>
           <button class="settings-tab" data-tab="shortcuts">${t('shortcuts') || '快捷键'}</button>
@@ -1245,13 +1243,7 @@ function createSettingsOverlay() {
             </label>
           </div>
 
-          <div class="settings-page" data-page="preview">
-            <h3>${t('preview') || '预览'}</h3>
-            <label class="setting-item">
-              <span>${t('live_preview') || '实时预览'}</span>
-              <input type="checkbox" id="settingLivePreview" checked />
-            </label>
-          </div>
+          
 
           <div class="settings-page" data-page="appearance">
             <h3>${t('appearance') || '外观'}</h3>
@@ -1342,7 +1334,7 @@ function createSettingsOverlay() {
     const autoSave = overlay.querySelector('#settingAutoSave')?.checked;
     const fontSize = parseInt(overlay.querySelector('#settingEditorFontSize')?.value || '14', 10);
     const lineWrap = overlay.querySelector('#settingLineWrap')?.checked;
-  const livePreview = overlay.querySelector('#settingLivePreview')?.checked;
+  
   const theme = overlay.querySelector('#settingTheme')?.value;
     const defaultExt = overlay.querySelector('#settingDefaultExt')?.value || '.md';
   const bgType = overlay.querySelector('#settingBgType')?.value || 'default';
@@ -1361,7 +1353,7 @@ function createSettingsOverlay() {
         editor.style.fontSize = `${fontSize}px`;
         editor.wrap = lineWrap ? 'soft' : 'off';
       }
-  window.__soraLivePreview__ = livePreview !== false;
+  
   applyTheme(theme || 'system');
       window.__soraDefaultExt__ = defaultExt.startsWith('.') ? defaultExt : `.${defaultExt}`;
 
@@ -1378,7 +1370,7 @@ function createSettingsOverlay() {
       applyBackground({ type: bgType, color: bgColor, image: bgImage, translucent: true, blur: bgBlur });
 
       updateUILanguage();
-      updatePreview();
+  updatePreview();
 
       showCustomAlert(t('settings_saved') || '设置已保存');
       closeAll();
@@ -1442,6 +1434,9 @@ function createSettingsOverlay() {
       document.documentElement.style.setProperty('--panel-blur', `${Math.max(0, Math.min(20, v))}px`);
     });
   }
+
+  // 实时预览：即时联动（无需点击保存）
+  
 
   return overlay;
 }
