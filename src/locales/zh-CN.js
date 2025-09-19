@@ -105,5 +105,33 @@ export default {
   choose_image: '选择图片',
   translucent_panels: '半透明面板'
   ,
-  background_blur: '背景模糊'
+   background_blur: '背景模糊',
+    // 浮动工具栏 & Markdown 操作
+    copy: '复制',
+    cut: '剪切',
+    bold: '加粗',
+    italic: '斜体',
+    heading: '标题',
+    heading_1: '一级标题',
+    heading_2: '二级标题',
+    heading_3: '三级标题',
+    link: '链接',
+    tip_toggle_bold: '切换加粗 (Ctrl+B)',
+    tip_toggle_italic: '切换斜体 (Ctrl+I)',
+    tip_heading_1: '设置/取消 一级标题 (Ctrl+1)',
+    tip_heading_2: '设置/取消 二级标题 (Ctrl+2)',
+    tip_heading_3: '设置/取消 三级标题 (Ctrl+3)',
+    tip_insert_link: '插入链接 (Ctrl+K)',
+    tip_copy: '复制选中文本',
+  tip_cut: '剪切选中文本',
+  // 快捷键页面
+  shortcuts_title: '常用快捷键',
+  shortcut_action: '功能',
+  shortcut_key: '按键',
+  shortcut_bold: '加粗',
+  shortcut_italic: '斜体',
+  shortcut_heading_1: '一级标题',
+  shortcut_heading_2: '二级标题',
+  shortcut_heading_3: '三级标题',
+  shortcut_link: '插入链接'
 };

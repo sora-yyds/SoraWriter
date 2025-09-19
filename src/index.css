@@ -1013,6 +1013,41 @@ body {
   white-space: pre-line; /* 支持换行符 */
 }
 
+/* 选区浮动工具栏 */
+.selection-toolbar {
+  position: fixed;
+  left: 0; top: 0;
+  transform: translate(-50%, -100%);
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-bg, #1e1e1e) 82%, transparent);
+  color: var(--fg, #eee);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  z-index: 3000;
+  -webkit-backdrop-filter: blur(var(--panel-blur, 8px));
+  backdrop-filter: blur(var(--panel-blur, 8px));
+  border: 1px solid rgba(255,255,255,0.08);
+  white-space: nowrap;
+}
+
+.selection-toolbar button {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.16);
+  color: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1.1;
+}
+
+.selection-toolbar button:hover {
+  background: rgba(255,255,255,0.08);
+}
+
 /* 标题栏设置按钮微调 */
 .settings-btn { color: #fff; }
 
@@ -1077,6 +1112,10 @@ body {
 .settings-content { flex: 1; padding: 12px 16px; overflow: auto; }
 .settings-page { display: none; }
 .settings-page.active { display: block; }
+.shortcuts-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.shortcuts-table th, .shortcuts-table td { border: 1px solid rgba(255,255,255,0.12); padding: 8px 10px; text-align: left; }
+body[data-theme="light"] .shortcuts-table th, body[data-theme="light"] .shortcuts-table td { border-color: rgba(0,0,0,0.12); }
+.shortcuts-table th { font-weight: 600; }
 
 .setting-item {
   display: flex; align-items: center; justify-content: space-between;

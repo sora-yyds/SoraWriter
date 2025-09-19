@@ -105,4 +105,33 @@ export default {
   choose_image: 'Choose Image',
   translucent_panels: 'Translucent panels',
   background_blur: 'Background blur'
+  ,
+  // Floating toolbar & Markdown actions
+  copy: 'Copy',
+  cut: 'Cut',
+  bold: 'Bold',
+  italic: 'Italic',
+  heading: 'Heading',
+  heading_1: 'Heading 1',
+  heading_2: 'Heading 2',
+  heading_3: 'Heading 3',
+  link: 'Link',
+  tip_toggle_bold: 'Toggle bold (Ctrl+B)',
+  tip_toggle_italic: 'Toggle italic (Ctrl+I)',
+  tip_heading_1: 'Toggle H1 (Ctrl+1)',
+  tip_heading_2: 'Toggle H2 (Ctrl+2)',
+  tip_heading_3: 'Toggle H3 (Ctrl+3)',
+  tip_insert_link: 'Insert link (Ctrl+K)',
+  tip_copy: 'Copy selection',
+  tip_cut: 'Cut selection',
+  // Shortcuts page
+  shortcuts_title: 'Common Shortcuts',
+  shortcut_action: 'Action',
+  shortcut_key: 'Keys',
+  shortcut_bold: 'Bold',
+  shortcut_italic: 'Italic',
+  shortcut_heading_1: 'Heading 1',
+  shortcut_heading_2: 'Heading 2',
+  shortcut_heading_3: 'Heading 3',
+  shortcut_link: 'Insert link'
 };

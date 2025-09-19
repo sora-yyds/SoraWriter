@@ -486,6 +486,9 @@ ${t('welcome_content') || '欢迎来到 SoraWriter Markdown 编辑器！开始�
   // 应用背景
   try { localStorage.setItem(PANELS_TRANSLUCENT_KEY, '1'); } catch {}
   applyBackground();
+
+  // 初始化选区工具栏
+  initSelectionToolbar();
 }
 
 // 处理编辑器输入
@@ -601,6 +604,8 @@ function updateUILanguage() {
   if (maximizeBtn && titlebarController && titlebarController.updateMaximizeButton) {
     titlebarController.updateMaximizeButton();
   }
+  // 更新浮动工具栏文案
+  renderSelectionToolbarButtons();
 }
 
 // 更新文件列表
@@ -1103,6 +1108,242 @@ function initPreviewModeButtons() {
   setViewMode('split');
 }
 
+// 选区浮动工具栏
+let selectionToolbarEl = null;
+function initSelectionToolbar() {
+  if (!editor) return;
+  selectionToolbarEl = document.createElement('div');
+  selectionToolbarEl.className = 'selection-toolbar';
+  // 初次渲染按钮（本地化）
+  renderSelectionToolbarButtons();
+  document.body.appendChild(selectionToolbarEl);
+
+  const getSelectionRect = () => {
+    // 近似定位：计算选区首字符相对编辑器的行列，再换算像素
+    const start = editor.selectionStart;
+    const text = editor.value.slice(0, start);
+    const lines = text.split('\n');
+    const line = lines.length - 1;
+    const col = lines[lines.length - 1].length;
+    const style = getComputedStyle(editor);
+    const lineHeight = parseFloat(style.lineHeight) || 20;
+    const charWidth = (function() {
+      // 粗略估算字符宽度：创建隐藏测量元素
+      const measurer = document.createElement('span');
+      measurer.textContent = 'MMMMMMMMMM';
+      measurer.style.visibility = 'hidden';
+      measurer.style.position = 'absolute';
+      measurer.style.whiteSpace = 'pre';
+      measurer.style.font = style.font;
+      document.body.appendChild(measurer);
+      const w = measurer.getBoundingClientRect().width / 10;
+      document.body.removeChild(measurer);
+      return w || 8;
+    })();
+    const paddingLeft = parseFloat(style.paddingLeft) || 0;
+    const paddingTop = parseFloat(style.paddingTop) || 0;
+    const x = editor.getBoundingClientRect().left + paddingLeft + col * charWidth - editor.scrollLeft;
+    const y = editor.getBoundingClientRect().top + paddingTop + line * lineHeight - editor.scrollTop;
+    return { x, y };
+  };
+
+  const showToolbar = () => {
+    if (!selectionToolbarEl) return;
+    const hasSelection = editor.selectionStart !== editor.selectionEnd;
+    if (!hasSelection) {
+      selectionToolbarEl.style.display = 'none';
+      return;
+    }
+    const { x, y } = getSelectionRect();
+    selectionToolbarEl.style.left = `${x}px`;
+    selectionToolbarEl.style.top = `${y - 8}px`;
+    selectionToolbarEl.style.display = 'flex';
+  };
+
+  const hideToolbar = () => {
+    if (selectionToolbarEl) selectionToolbarEl.style.display = 'none';
+  };
+
+  // 交互事件
+  editor.addEventListener('select', showToolbar);
+  editor.addEventListener('keyup', showToolbar);
+  editor.addEventListener('mouseup', showToolbar);
+  editor.addEventListener('scroll', hideToolbar);
+  editor.addEventListener('blur', hideToolbar);
+
+  // 模式切换时隐藏
+  window.addEventListener('resize', hideToolbar);
+
+  selectionToolbarEl.addEventListener('mousedown', (e) => e.preventDefault());
+  selectionToolbarEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const hasSelection = editor.selectionStart !== editor.selectionEnd;
+    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+    if (action === 'copy') {
+      if (!hasSelection) return;
+      try {
+        await navigator.clipboard.writeText(selectedText);
+      } catch {
+        // 回退
+        document.execCommand('copy');
+      }
+      hideToolbar();
+    } else if (action === 'cut') {
+      if (!hasSelection) return;
+      try {
+        await navigator.clipboard.writeText(selectedText);
+      } catch {
+        document.execCommand('copy');
+      }
+      // 删除选中文本
+      const before = editor.value.slice(0, editor.selectionStart);
+      const after = editor.value.slice(editor.selectionEnd);
+      editor.value = before + after;
+      // 将光标放到删除位置
+      const pos = before.length;
+      editor.setSelectionRange(pos, pos);
+      // 同步状态
+      handleEditorInput();
+      hideToolbar();
+    } else if (action === 'bold') {
+      toggleWrap('**');
+    } else if (action === 'italic') {
+      toggleWrap('*');
+    } else if (action === 'h1') {
+      toggleHeading(1);
+    } else if (action === 'h2') {
+      toggleHeading(2);
+    } else if (action === 'h3') {
+      toggleHeading(3);
+    } else if (action === 'link') {
+      insertLink();
+    }
+  });
+
+  // 键盘快捷键（无须显示工具条也生效）
+  editor.addEventListener('keydown', (e) => {
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl) return;
+    const k = e.key.toLowerCase();
+    if (k === 'b') { e.preventDefault(); toggleWrap('**'); }
+    else if (k === 'i') { e.preventDefault(); toggleWrap('*'); }
+    else if (k === 'k') { e.preventDefault(); insertLink(); }
+    else if (e.key === '1') { e.preventDefault(); toggleHeading(1); }
+    else if (e.key === '2') { e.preventDefault(); toggleHeading(2); }
+    else if (e.key === '3') { e.preventDefault(); toggleHeading(3); }
+  });
+}
+
+// 根据当前语言渲染工具栏按钮
+function renderSelectionToolbarButtons() {
+  if (!selectionToolbarEl) return;
+  selectionToolbarEl.innerHTML = `
+    <button data-action="bold" title="${t('tip_toggle_bold')}"><strong>${t('bold')}</strong></button>
+    <button data-action="italic" title="${t('tip_toggle_italic')}"><em>${t('italic')}</em></button>
+    <button data-action="h1" title="${t('tip_heading_1')}">H1</button>
+    <button data-action="h2" title="${t('tip_heading_2')}">H2</button>
+    <button data-action="h3" title="${t('tip_heading_3')}">H3</button>
+    <button data-action="link" title="${t('tip_insert_link')}">${t('link')}</button>
+    <button data-action="copy" title="${t('tip_copy')}">${t('copy')}</button>
+    <button data-action="cut" title="${t('tip_cut')}">${t('cut')}</button>
+  `;
+}
+
+function getDefaultPlaceholder() {
+  return (getCurrentLocale && getCurrentLocale() === 'zh-CN') ? '文本' : 'text';
+}
+
+function replaceSelection(newText, selectStartOffset = 0, selectEndOffset = newText.length) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const before = editor.value.slice(0, start);
+  const after = editor.value.slice(end);
+  editor.value = before + newText + after;
+  const selStart = before.length + selectStartOffset;
+  const selEnd = before.length + selectEndOffset;
+  editor.setSelectionRange(selStart, selEnd);
+  handleEditorInput();
+}
+
+function toggleWrap(wrapper) {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  if (start === end) {
+    const ph = getDefaultPlaceholder();
+    const wrapped = `${wrapper}${ph}${wrapper}`;
+    replaceSelection(wrapped, wrapper.length, wrapper.length + ph.length);
+    return;
+  }
+  const selected = editor.value.slice(start, end);
+  const wLen = wrapper.length;
+  if (selected.startsWith(wrapper) && selected.endsWith(wrapper)) {
+    const inner = selected.slice(wLen, selected.length - wLen);
+    replaceSelection(inner, 0, inner.length);
+  } else {
+    const wrapped = `${wrapper}${selected}${wrapper}`;
+    replaceSelection(wrapped, wLen, wLen + selected.length);
+  }
+}
+
+function toggleHeading(level) {
+  const start = editor.selectionStart;
+  const text = editor.value;
+  const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+  let lineEnd = text.indexOf('\n', lineStart);
+  if (lineEnd === -1) lineEnd = text.length;
+  const line = text.slice(lineStart, lineEnd);
+  const m = line.match(/^\s{0,3}(#{1,6})\s+(.*)$/);
+  let newLine = '';
+  if (m) {
+    const curLevel = m[1].length;
+    const content = m[2];
+    if (curLevel === level) {
+      newLine = content;
+    } else {
+      newLine = `${'#'.repeat(level)} ${content}`;
+    }
+  } else {
+    const trimmed = line.replace(/^\s+/, '');
+    newLine = `${'#'.repeat(level)} ${trimmed}`;
+  }
+  const before = text.slice(0, lineStart);
+  const after = text.slice(lineEnd);
+  editor.value = before + newLine + after;
+  const caretPos = before.length + Math.min(newLine.length, level + 1);
+  editor.setSelectionRange(caretPos, caretPos);
+  handleEditorInput();
+}
+
+function looksLikeUrl(s) {
+  if (!s) return false;
+  const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(s);
+  const looksDomain = /^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(s);
+  return hasScheme || looksDomain;
+}
+
+function insertLink() {
+  const start = editor.selectionStart;
+  const end = editor.selectionEnd;
+  const sel = editor.value.slice(start, end);
+  if (!sel) {
+    const ph = getDefaultPlaceholder();
+    const template = `[${ph}](https://)`;
+    replaceSelection(template, ph.length + 3, ph.length + 11);
+    return;
+  }
+  if (looksLikeUrl(sel)) {
+    const url = sel.startsWith('http') || sel.startsWith('mailto:') || sel.startsWith('tel:') ? sel : `https://${sel}`;
+    const label = sel.replace(/^https?:\/\//, '');
+    const out = `[${label}](${url})`;
+    replaceSelection(out, 1, 1 + label.length);
+  } else {
+    const out = `[${sel}](https://)`;
+    replaceSelection(out, sel.length + 3, sel.length + 11);
+  }
+}
+
 // 设置预览模式
 function setViewMode(mode) {
   currentViewMode = mode;
@@ -1442,6 +1683,40 @@ function createSettingsOverlay() {
           <div class="settings-page" data-page="shortcuts">
             <h3>${t('shortcuts') || '快捷键'}</h3>
             <p class="setting-hint">${t('shortcuts_hint') || '在此查看或自定义常用快捷键（后续可扩展）。'}</p>
+            <table class="shortcuts-table" aria-label="${t('shortcuts_title')}">
+              <thead>
+                <tr>
+                  <th>${t('shortcut_action')}</th>
+                  <th>${t('shortcut_key')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${t('shortcut_bold')}</td>
+                  <td>Ctrl+B</td>
+                </tr>
+                <tr>
+                  <td>${t('shortcut_italic')}</td>
+                  <td>Ctrl+I</td>
+                </tr>
+                <tr>
+                  <td>${t('shortcut_heading_1')}</td>
+                  <td>Ctrl+1</td>
+                </tr>
+                <tr>
+                  <td>${t('shortcut_heading_2')}</td>
+                  <td>Ctrl+2</td>
+                </tr>
+                <tr>
+                  <td>${t('shortcut_heading_3')}</td>
+                  <td>Ctrl+3</td>
+                </tr>
+                <tr>
+                  <td>${t('shortcut_link')}</td>
+                  <td>Ctrl+K</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
       </div>
