@@ -1172,6 +1172,36 @@ async function updatePreview() {
   const html = marked(content);
   preview.innerHTML = html;
 
+  // 处理预览中的超链接：默认在外部浏览器打开
+  try {
+    // 规范化 href 并为外链补充安全属性
+    preview.querySelectorAll('a[href]').forEach(a => {
+      let href = a.getAttribute('href') || '';
+      // 忽略锚点与相对路径（# / ./ ../ 开头）
+      const isAnchor = href.startsWith('#');
+      const isRelativePath = href.startsWith('/') || href.startsWith('./') || href.startsWith('../');
+
+      // 处理协议相对链接 //example.com
+      if (/^\/\//.test(href)) {
+        href = 'https:' + href;
+        a.setAttribute('href', href);
+      }
+      // 无协议且不像相对路径、且形如域名的，默认加 https://
+      const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href);
+      const looksLikeDomain = /^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(href);
+      if (!hasScheme && !isAnchor && !isRelativePath && looksLikeDomain) {
+        href = 'https://' + href;
+        a.setAttribute('href', href);
+      }
+
+      // 为外链增加安全属性
+      if (/^(https?:|mailto:|tel:)/i.test(href)) {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      }
+    });
+  } catch {}
+
   // 数学公式渲染（KaTeX 自动扫描）
   try {
     renderMathInElement(preview, {
@@ -1866,4 +1896,46 @@ async function renameFile(oldFilename) {
       updateUnsavedIndicator();
     }
   }, oldFilename.replace('.md', ''));
+}
+
+// 在初始化编辑器后绑定一次事件委托，拦截预览中的链接点击
+if (preview) {
+  preview.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+
+    let rawHref = a.getAttribute('href') || '';
+    // 锚点链接，允许默认行为
+    if (rawHref.startsWith('#')) return;
+
+    // 相对路径（/ ./ ../）一律阻止应用内导航（防误跳到 dev server 路由）
+    const isRelativePath = rawHref.startsWith('/') || rawHref.startsWith('./') || rawHref.startsWith('../');
+
+    // 处理协议相对链接 //example.com
+    if (/^\/\//.test(rawHref)) {
+      rawHref = 'https:' + rawHref;
+    }
+
+    // 无协议且不像相对路径、且形如域名的，默认加 https://
+    const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(rawHref);
+    const looksLikeDomain = /^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(rawHref);
+    if (!hasScheme && !isRelativePath && looksLikeDomain) {
+      rawHref = 'https://' + rawHref;
+      a.setAttribute('href', rawHref);
+    }
+
+    // 对非锚点链接一律阻止应用内导航
+    e.preventDefault();
+
+    // 能外部打开的协议：优先调用 electronAPI.openExternal，再用 window.open 兜底
+    if (/^(https?:|mailto:|tel:)/i.test(rawHref)) {
+      if (window.electronAPI && typeof window.electronAPI.openExternal === 'function') {
+        try { window.electronAPI.openExternal(rawHref); } catch {}
+      }
+      try { window.open(rawHref, '_blank', 'noopener,noreferrer'); } catch {}
+    } else {
+      // 既不是外链协议也不是锚点：忽略，避免误导航
+      // 可按需提示：showCustomAlert('暂不支持打开该链接');
+    }
+  });
 }

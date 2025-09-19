@@ -1,7 +1,7 @@
 // See the Electron documentation for details on how to use preload scripts:
 // https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, shell } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // 文件操作相关
@@ -75,4 +75,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   basename: (path) => path.split(/[\/\\]/).pop(),
   dirname: (path) => path.substring(0, path.lastIndexOf(/[\/\\]/)),
   join: (...paths) => paths.join('/')
+  ,
+  // 打开外部链接（默认浏览器）
+  openExternal: (url) => {
+    try {
+      const u = (url || '').trim();
+      if (u && /^(https?:|mailto:|tel:)/i.test(u)) {
+        const p = shell.openExternal(u);
+        // 兼容 Promise/void
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
+    } catch {}
+  }
 });

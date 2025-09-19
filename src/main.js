@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const path = require('node:path');
 const fs = require('fs');
 
@@ -153,6 +153,25 @@ const createWindow = () => {
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+
+  // 拦截窗口打开与页面导航，统一用外部浏览器打开外链
+  if (mainWindow && mainWindow.webContents) {
+    // 拦截 window.open
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+      if (/^(https?:|mailto:|tel:)/i.test(url)) {
+        shell.openExternal(url);
+      }
+      return { action: 'deny' };
+    });
+
+    // 拦截导航（包括用户点击 a 链接导致的导航）
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+      if (/^(https?:|mailto:|tel:)/i.test(url)) {
+        event.preventDefault();
+        shell.openExternal(url);
+      }
+    });
+  }
 
   // Open the DevTools only in development mode
   // To enable DevTools, uncomment the line below or press F12
